@@ -1,0 +1,879 @@
+---------------------------------------creare tabele
+
+SET FEEDBACK 1
+SET LINESIZE 80
+SET TRIMSPOOL ON
+SET TAB OFF
+SET PAGESIZE 100
+SET ECHO OFF
+
+
+--clienti--
+CREATE TABLE clienti_www (
+    client_id NUMBER CONSTRAINT client_id_n NOT NULL,
+    nume VARCHAR2(30) CONSTRAINT nume_n NOT NULL,
+    prenume VARCHAR2(30) CONSTRAINT prenume_n NOT NULL,
+    email VARCHAR2(30) CONSTRAINT email_n NOT NULL,
+    numar_telefon NUMBER(10) CONSTRAINT numar_telefon_n NOT NULL,
+    tip_persoana VARCHAR2(30) CONSTRAINT tip_persoana_n NOT NULL,
+    CONSTRAINT client_id_pk PRIMARY KEY (client_id)
+);
+
+
+
+--servicii financiare--
+CREATE TABLE servicii_financiare_www (
+    id_financiar NUMBER,
+    investitii VARCHAR(50),
+    CONSTRAINT id_financiar_pk PRIMARY KEY(id_financiar)
+);
+
+--clienti_cu_servicii_financiare--
+CREATE TABLE clienti_cu_servicii_financiare_www(    
+    id_client_cu_serv_fin NUMBER CONSTRAINT id_client_cu_serv_fin_n NOT NULL,
+    client_id NUMBER CONSTRAINT client_id_x NOT NULL,
+    id_financiar NUMBER CONSTRAINT id_financiar_x NOT NULL,
+    
+    CONSTRAINT id_client_cu_serv_fin_pk PRIMARY KEY (id_client_cu_serv_fin)
+);
+    
+ALTER TABLE clienti_cu_servicii_financiare_www
+ADD (CONSTRAINT clienti_cu_servicii_financiare_fk1 FOREIGN KEY( client_id ) REFERENCES clienti_www( client_id ),
+    CONSTRAINT clienti_cu_servicii_financiare_fk2 FOREIGN KEY(id_financiar ) REFERENCES servicii_financiare_www( id_financiar )
+
+);
+
+
+--locatii--
+
+CREATE TABLE locatii_www (
+    id_locatie NUMBER CONSTRAINT id_locatie_n NOT NULL,
+    client_id NUMBER,
+    strada VARCHAR(20) CONSTRAINT strada_id_n NOT NULL,
+    oras VARCHAR(20) CONSTRAINT oras_id_n NOT NULL,
+    CONSTRAINT id_locatie_pk PRIMARY KEY(id_locatie)
+) ORGANIZATION INDEX;
+
+ALTER TABLE locatii_www
+ADD ( CONSTRAINT locatii_clienti_fk FOREIGN KEY(client_id) REFERENCES clienti_www(client_id));
+
+
+--parteneri--
+CREATE TABLE parteneri_www(
+    id_partener NUMBER CONSTRAINT id_partener_n NOT NULL,
+    nume_companie VARCHAR(30),
+    CONSTRAINT id_partener_pk PRIMARY KEY(id_partener) 
+    );
+
+--seminarii--
+CREATE TABLE seminarii_www(
+    id_seminar NUMBER CONSTRAINT id_seminar_n NOT NULL,
+    client_id NUMBER,
+    id_partener NUMBER CONSTRAINT id_partener_nn NOT NULL,
+    seminar_data VARCHAR(20) CONSTRAINT seminar_data_n NOT NULL,
+    locatie VARCHAR(20) CONSTRAINT locatie_n NOT NULL,
+    CONSTRAINT id_seminar_pk PRIMARY KEY(id_seminar) 
+    );
+    
+ALTER TABLE seminarii_www
+ADD (CONSTRAINT seminarii_fk FOREIGN KEY(client_id) REFERENCES clienti_www(client_id),
+CONSTRAINT parteneri_fk FOREIGN KEY(id_partener) REFERENCES parteneri_www(id_partener));
+
+
+--credit--
+
+CREATE TABLE credit_www(
+    id_credit NUMBER,
+    client_id NUMBER,
+    tip_credit VARCHAR(30),
+    status VARCHAR(20) ,
+    credit_suma VARCHAR(20),
+    durata VARCHAR(20),
+    CONSTRAINT id_credit_pk PRIMARY KEY(id_credit) 
+    );
+    
+ALTER TABLE credit_www
+ADD (CONSTRAINT credit_fk FOREIGN KEY(client_id) REFERENCES clienti_www(client_id));
+
+
+--dobanda--
+
+CREATE TABLE dobanda_www(
+    id_dobanda NUMBER ,
+    id_credit NUMBER ,
+    tip_dobanda VARCHAR(30) ,
+    procent_2_final VARCHAR(20),
+    CONSTRAINT id_dobanda_pk PRIMARY KEY(id_dobanda) 
+    );
+    
+ALTER TABLE dobanda_www
+ADD (CONSTRAINT dobanda_fk FOREIGN KEY( id_credit ) REFERENCES credit_www( id_credit ));
+
+
+--conturi--
+
+CREATE TABLE conturi_www(
+    id_cont NUMBER CONSTRAINT cont_n NOT NULL,
+    client_id NUMBER CONSTRAINT client_n NOT NULL,
+    tip_cont VARCHAR2(10) CONSTRAINT tip_cont_n NOT NULL,
+    limita_zilnica NUMBER CONSTRAINT limita_n NOT NULL,
+    CONSTRAINT id_cont_pk PRIMARY KEY(id_cont) 
+    );
+    
+ALTER TABLE conturi_www
+ADD (CONSTRAINT conturi_fk FOREIGN KEY( client_id ) REFERENCES clienti_www( client_id ));
+
+--carduri--
+
+CREATE TABLE carduri_www(
+    id_card NUMBER CONSTRAINT card_n NOT NULL,
+    id_cont NUMBER CONSTRAINT cont_nn NOT NULL,
+    tip_card VARCHAR2(10) CONSTRAINT tip_card_n NOT NULL,
+    data_expirare VARCHAR(20) CONSTRAINT data_exp_n NOT NULL,
+    CONSTRAINT id_card_pk PRIMARY KEY(id_card)
+    );
+    
+ALTER TABLE carduri_www
+ADD (CONSTRAINT carduri_fk FOREIGN KEY( id_cont ) REFERENCES conturi_www(id_cont));
+
+--private banking--
+
+CREATE TABLE private_banking_www(
+    id_private NUMBER,
+    client_id NUMBER,
+    tip_serviciu_privat VARCHAR(50),
+    CONSTRAINT id_private_pk PRIMARY KEY(id_private)
+    );
+    
+ALTER TABLE private_banking_www
+ADD (CONSTRAINT private_fk FOREIGN KEY( client_id ) REFERENCES clienti_www( client_id ));
+
+
+--internet banking--
+CREATE TABLE internet_banking_www(
+    id_internet NUMBER CONSTRAINT int_n NOT NULL,
+    client_id NUMBER CONSTRAINT cli_n NOT NULL,
+    istoric_tranzactii VARCHAR(2000),
+    internet_status VARCHAR(20) CONSTRAINT int_status_n NOT NULL,
+    CONSTRAINT id_internet_pk PRIMARY KEY(id_internet)
+    );
+    
+ALTER TABLE internet_banking_www
+ADD (CONSTRAINT internet_fk FOREIGN KEY( client_id ) REFERENCES clienti_www( client_id ));
+
+--participa--
+
+CREATE TABLE participa_www(
+    id_participa NUMBER,
+     id_partener NUMBER,
+     client_id NUMBER,
+    id_seminar NUMBER,
+    CONSTRAINT id_participa_pk PRIMARY KEY(id_participa)
+    );
+    
+ALTER TABLE participa_www
+ADD (CONSTRAINT participa_fk FOREIGN KEY( id_seminar ) REFERENCES seminarii_www( id_seminar ),
+    CONSTRAINT participa_fk1 FOREIGN KEY(id_partener ) REFERENCES parteneri_www( id_partener ),
+    CONSTRAINT participa_fk2 FOREIGN KEY( client_id ) REFERENCES clienti_www( client_id )
+
+);
+
+---------------------------------------------------inserare
+
+
+CREATE SEQUENCE clienti_seq START WITH 1 INCREMENT BY 1;
+
+INSERT INTO clienti_www (client_id, nume, prenume, email, numar_telefon, tip_persoana)
+VALUES (clienti_seq.NEXTVAL, 'Popescu', 'Ion', 'ion.popescu@gmail.com', 0721123456, 'persoana fizica');
+
+INSERT INTO clienti_www (client_id, nume, prenume, email, numar_telefon, tip_persoana)
+VALUES (clienti_seq.NEXTVAL, 'Ionescu', 'Maria', 'maria.ionescu@gmail.com', 0722345678, 'persoana fizica');
+
+INSERT INTO clienti_www (client_id, nume, prenume, email, numar_telefon, tip_persoana)
+VALUES (clienti_seq.NEXTVAL, 'Dumitrescu', 'Andrei', 'andrei.dumitrescu@gmail.com', 4561237389, 'persoana fizica');
+
+INSERT INTO clienti_www (client_id, nume, prenume, email, numar_telefon, tip_persoana)
+VALUES (clienti_seq.NEXTVAL, 'Georgescu', 'Ana', 'ana.georgescu@gmail.com', 7893123456, 'persoana fizica');
+
+INSERT INTO clienti_www (client_id, nume, prenume, email, numar_telefon, tip_persoana)
+VALUES (clienti_seq.NEXTVAL, 'SRL', 'Smart Tech Solutions', 'smart.tech@solutions.com', 3216549873, 'persoana juridica');
+
+INSERT INTO clienti_www (client_id, nume, prenume, email, numar_telefon, tip_persoana)
+VALUES (clienti_seq.NEXTVAL, 'SRL', 'Expert Consulting', 'exp.ert@consulting.com', 3263191273, 'persoana juridica');
+
+INSERT INTO clienti_www (client_id, nume, prenume, email, numar_telefon, tip_persoana)
+VALUES (clienti_seq.NEXTVAL, 'Mincu', 'George', 'mincu.george@gmail.com', 7855523456, 'persoana fizica' );
+
+
+
+
+CREATE SEQUENCE servicii_financiare_seq START WITH 10 INCREMENT BY 3;
+
+INSERT INTO servicii_financiare_www (id_financiar, investitii)
+VALUES (servicii_financiare_seq.NEXTVAL, 'Fonduri mutuale');
+
+INSERT INTO servicii_financiare_www (id_financiar, investitii)
+VALUES (servicii_financiare_seq.NEXTVAL, 'Investitii NASDAQ');
+
+INSERT INTO servicii_financiare_www (id_financiar, investitii)
+VALUES (servicii_financiare_seq.NEXTVAL, 'Investitii crypto');
+
+INSERT INTO servicii_financiare_www (id_financiar, investitii)
+VALUES (servicii_financiare_seq.NEXTVAL, 'Investitii in companii');
+
+INSERT INTO servicii_financiare_www (id_financiar, investitii)
+VALUES (servicii_financiare_seq.NEXTVAL, 'Investitii imobiliare');
+
+INSERT INTO servicii_financiare_www (id_financiar, investitii)
+VALUES (servicii_financiare_seq.NEXTVAL, 'Investitii BVB');
+                                                                                      
+
+
+
+CREATE SEQUENCE clienti_cu_servicii_financiare_seq START WITH 500 INCREMENT BY 1;
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 1, 10);
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 2, 10);
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 3, 13);
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 3, 16);
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 4, 19);
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 5, 22);
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 6, 22);
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 7, 22);
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 2, 22);
+
+INSERT INTO clienti_cu_servicii_financiare_www (id_client_cu_serv_fin, client_id, id_financiar)
+VALUES (clienti_cu_servicii_financiare_seq.NEXTVAL, 3, 22);
+
+
+
+CREATE SEQUENCE parteneri_seq START WITH 70 INCREMENT BY 1;
+
+INSERT INTO parteneri_www (id_partener, nume_companie)
+VALUES (parteneri_seq.NEXTVAL, 'BCR');
+
+INSERT INTO parteneri_www (id_partener, nume_companie)
+VALUES (parteneri_seq.NEXTVAL, 'BRD');
+
+INSERT INTO parteneri_www (id_partener, nume_companie)
+VALUES (parteneri_seq.NEXTVAL, 'ING');
+
+INSERT INTO parteneri_www (id_partener, nume_companie)
+VALUES (parteneri_seq.NEXTVAL, 'Raiffeisen Bank');
+
+INSERT INTO parteneri_www (id_partener, nume_companie)
+VALUES (parteneri_seq.NEXTVAL, 'Banca Transilvania');
+
+INSERT INTO parteneri_www (id_partener, nume_companie)
+VALUES (parteneri_seq.NEXTVAL, 'UniCredit Bank');
+
+
+
+CREATE SEQUENCE seminarii_seq START WITH 50 INCREMENT BY 1;
+
+INSERT INTO seminarii_www (id_seminar, client_id, id_partener, seminar_data, locatie)
+VALUES (seminarii_seq.NEXTVAL, 1, 70,'01-Jan-22', 'Bucuresti');
+
+INSERT INTO seminarii_www (id_seminar, client_id, id_partener, seminar_data, locatie)
+VALUES (seminarii_seq.NEXTVAL, 2, 71, '15-Mar-22', 'Cluj-Napoca');
+
+INSERT INTO seminarii_www (id_seminar, client_id, id_partener, seminar_data, locatie)
+VALUES (seminarii_seq.NEXTVAL, 3, 72, '10-Apr-22', 'Timisoara');
+
+INSERT INTO seminarii_www (id_seminar, client_id, id_partener, seminar_data, locatie)
+VALUES (seminarii_seq.NEXTVAL, 4, 73, '25-Jun-22', 'Iasi');
+
+INSERT INTO seminarii_www (id_seminar, client_id, id_partener, seminar_data, locatie)
+VALUES (seminarii_seq.NEXTVAL, 5, 74, '05-Jul-22', 'Constanta');
+
+INSERT INTO seminarii_www (id_seminar, client_id, id_partener, seminar_data, locatie)
+VALUES (seminarii_seq.NEXTVAL, 6, 75, '20-Aug-22', 'Brasov');
+
+INSERT INTO seminarii_www (id_seminar, client_id, id_partener, seminar_data, locatie)
+VALUES (seminarii_seq.NEXTVAL,1, 75, '15-Nov-22', 'Sibiu');
+
+
+
+
+CREATE SEQUENCE locatii_seq START WITH 80 INCREMENT BY 1;
+
+INSERT INTO locatii_www (id_locatie, client_id, strada, oras)
+VALUES (locatii_seq.NEXTVAL,1, 'Titulescu', 'Bucuresti');
+
+INSERT INTO locatii_www (id_locatie, client_id, strada, oras)
+VALUES (locatii_seq.NEXTVAL,2, 'Titulescu', 'Bucuresti');
+
+INSERT INTO locatii_www (id_locatie, client_id, strada, oras)
+VALUES (locatii_seq.NEXTVAL,3, 'Avram Iancu', 'Cluj-Napoca');
+
+INSERT INTO locatii_www (id_locatie, client_id, strada, oras)
+VALUES (locatii_seq.NEXTVAL, 4, 'Victoriei', 'Bucuresti');
+
+INSERT INTO locatii_www (id_locatie, client_id, strada, oras)
+VALUES (locatii_seq.NEXTVAL, 5, 'Icoanei', 'Iasi');
+
+INSERT INTO locatii_www (id_locatie, client_id, strada, oras)
+VALUES (locatii_seq.NEXTVAL, 6, 'Eroilor', 'Timisoara');
+
+INSERT INTO locatii_www (id_locatie, client_id, strada, oras)
+VALUES (locatii_seq.NEXTVAL, 7, 'Unirii', 'Bucuresti');
+
+
+
+
+
+CREATE SEQUENCE participa_seq START WITH 100 INCREMENT BY 1;
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES (participa_seq.NEXTVAL, 70, 1, 50);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES(participa_seq.NEXTVAL, 71, 2, 51);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES (participa_seq.NEXTVAL, 71, 3, 52);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES(participa_seq.NEXTVAL, 74, 4, 53);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES(participa_seq.NEXTVAL, 73, 5, 54);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES(participa_seq.NEXTVAL, 72, 6, 55);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES(participa_seq.NEXTVAL, 75, 1, 56);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES(participa_seq.NEXTVAL, 75, 2, 56);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES(participa_seq.NEXTVAL, 72, 3, 55);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES(participa_seq.NEXTVAL, 73, 4, 55);
+
+INSERT INTO participa_www (id_participa, id_partener, client_id, id_seminar)
+VALUES(participa_seq.NEXTVAL, 73, 7, 51);
+
+
+
+CREATE SEQUENCE credit_seq START WITH 170 INCREMENT BY 1;
+
+INSERT INTO credit_www (id_credit, client_id, tip_credit, status, credit_suma, durata)
+VALUES (credit_seq.NEXTVAL,1,'investitii','Aprobat','10000', '2 ani');
+
+INSERT INTO credit_www (id_credit, client_id, tip_credit, status, credit_suma, durata)
+VALUES (credit_seq.NEXTVAL, 2, 'investitii', 'Aprobat', '500000', '5 ani');
+
+INSERT INTO credit_www (id_credit, client_id, tip_credit, status, credit_suma, durata)
+VALUES(credit_seq.NEXTVAL, 3, 'nevoi personale', 'Aprobat', '25000', '5 ani');
+
+INSERT INTO credit_www (id_credit, client_id, tip_credit, status, credit_suma, durata)
+VALUES(credit_seq.NEXTVAL, 4, 'over draft', 'In asteptare', '15000', '2 ani');
+
+INSERT INTO credit_www (id_credit, client_id, tip_credit, status, credit_suma, durata)
+VALUES(credit_seq.NEXTVAL, 5, 'investitii', 'Aprobat', '750000', '20 ani');
+
+INSERT INTO credit_www (id_credit, client_id, tip_credit, status, credit_suma, durata)
+VALUES(credit_seq.NEXTVAL, 6, NULL, NULL,NULL, NULL);
+
+INSERT INTO credit_www (id_credit, client_id, tip_credit, status, credit_suma, durata)
+VALUES(credit_seq.NEXTVAL, 7, NULL, NULL,NULL, NULL);
+
+
+
+CREATE SEQUENCE dobanda_seq START WITH 150 INCREMENT BY 1;
+
+INSERT INTO dobanda_www(id_dobanda, id_credit, tip_dobanda, procent_2_final)
+VALUES (dobanda_seq.NEXTVAL,170,'variabila','5%');
+
+INSERT INTO dobanda_www (id_dobanda, id_credit, tip_dobanda, procent_2_final)
+VALUES (dobanda_seq.NEXTVAL, 171, 'fixa', '3.5%');
+
+INSERT INTO dobanda_www (id_dobanda, id_credit, tip_dobanda, procent_2_final)
+VALUES(dobanda_seq.NEXTVAL, 172, 'variabila', '6%');
+
+INSERT INTO dobanda_www (id_dobanda, id_credit, tip_dobanda, procent_2_final)
+VALUES(dobanda_seq.NEXTVAL, 173, 'fixa', '4.25%');
+
+INSERT INTO dobanda_www (id_dobanda, id_credit, tip_dobanda, procent_2_final)
+VALUES(dobanda_seq.NEXTVAL, 174, 'variabila', '5.75%');
+
+INSERT INTO dobanda_www (id_dobanda, id_credit, tip_dobanda, procent_2_final)
+VALUES(dobanda_seq.NEXTVAL, 175, NULL, NULL);
+
+INSERT INTO dobanda_www (id_dobanda, id_credit, tip_dobanda, procent_2_final)
+VALUES(dobanda_seq.NEXTVAL, 176, NULL, NULL);
+
+
+
+
+CREATE SEQUENCE conturi_seq START WITH 180 INCREMENT BY 1;
+
+INSERT INTO conturi_www (id_cont,client_id, tip_cont, limita_zilnica)
+VALUES (conturi_seq.NEXTVAL,1,'economii','4000');
+
+INSERT INTO conturi_www (id_cont, client_id, tip_cont, limita_zilnica)
+VALUES (conturi_seq.NEXTVAL, 2, 'curent', '2000');
+
+INSERT INTO conturi_www (id_cont, client_id, tip_cont, limita_zilnica)
+VALUES(conturi_seq.NEXTVAL, 3, 'economii', '5000');
+
+INSERT INTO conturi_www (id_cont, client_id, tip_cont, limita_zilnica)
+VALUES(conturi_seq.NEXTVAL, 4, 'curent', '1000');
+
+INSERT INTO conturi_www (id_cont, client_id, tip_cont, limita_zilnica)
+VALUES(conturi_seq.NEXTVAL, 5, 'curent', '2000');
+
+INSERT INTO conturi_www (id_cont, client_id, tip_cont, limita_zilnica)
+VALUES(conturi_seq.NEXTVAL, 6, 'economii', '8000');
+
+INSERT INTO conturi_www (id_cont, client_id, tip_cont, limita_zilnica)
+VALUES(conturi_seq.NEXTVAL, 7, 'economii', '6000');
+
+
+
+CREATE SEQUENCE carduri_seq START WITH 190 INCREMENT BY 1;
+
+INSERT INTO CARDURI_www (id_card, id_cont, tip_card, data_expirare)
+VALUES (carduri_seq.NEXTVAL,180,'debit','01-Jun-26');
+
+INSERT INTO CARDURI_www (id_card, id_cont, tip_card, data_expirare)
+VALUES (carduri_seq.NEXTVAL, 181, 'credit', '01-Dec-25');
+
+INSERT INTO CARDURI_www (id_card, id_cont, tip_card, data_expirare)
+VALUES(carduri_seq.NEXTVAL, 182, 'debit', '01-Sep-27');
+
+INSERT INTO CARDURI_www (id_card, id_cont, tip_card, data_expirare)
+VALUES(carduri_seq.NEXTVAL, 183, 'credit', '01-Apr-24');
+
+INSERT INTO CARDURI_www (id_card, id_cont, tip_card, data_expirare)
+VALUES(carduri_seq.NEXTVAL, 184, 'credit', '01-Feb-28');
+
+INSERT INTO CARDURI_www (id_card, id_cont, tip_card, data_expirare)
+VALUES(carduri_seq.NEXTVAL, 185, 'debit', '01-Nov-26');
+
+INSERT INTO CARDURI_www (id_card, id_cont, tip_card, data_expirare)
+VALUES(carduri_seq.NEXTVAL, 186, 'debit', '01-Nov-29');
+
+
+
+CREATE SEQUENCE private_seq START WITH 200 INCREMENT BY 1;
+
+INSERT INTO private_banking_www (id_private, client_id, tip_serviciu_privat)
+VALUES (private_seq.NEXTVAL,1,'Gestionare portofoliu ');
+
+INSERT INTO private_banking_www (id_private, client_id, tip_serviciu_privat)
+VALUES (private_seq.NEXTVAL, 2, 'Consultanta pentru planificarea financiara');
+
+INSERT INTO private_banking_www (id_private, client_id, tip_serviciu_privat)
+VALUES (private_seq.NEXTVAL, 3, 'Servicii de investitii la nivel inalt');
+
+INSERT INTO private_banking_www (id_private, client_id, tip_serviciu_privat)
+VALUES (private_seq.NEXTVAL, 4, NULL);
+
+INSERT INTO private_banking_www (id_private, client_id, tip_serviciu_privat)
+VALUES (private_seq.NEXTVAL, 5, NULL);
+
+INSERT INTO private_banking_www (id_private, client_id, tip_serviciu_privat)
+VALUES (private_seq.NEXTVAL, 6, NULL);
+
+INSERT INTO private_banking_www (id_private, client_id, tip_serviciu_privat)
+VALUES (private_seq.NEXTVAL, 7, NULL);
+
+
+
+
+CREATE SEQUENCE internet_seq START WITH 220 INCREMENT BY 1;
+
+INSERT INTO internet_banking_www (id_internet, client_id, istoric_tranzactii,internet_status)
+VALUES (internet_seq.NEXTVAL,1,'plata interna','activ');
+
+INSERT INTO internet_banking_www (id_internet, client_id, istoric_tranzactii, internet_status)
+VALUES (internet_seq.NEXTVAL, 2, 'plata interna', 'activ');
+
+INSERT INTO internet_banking_www (id_internet, client_id, istoric_tranzactii, internet_status)
+VALUES(internet_seq.NEXTVAL, 3, 'plata externa', 'activ');
+
+INSERT INTO internet_banking_www (id_internet, client_id, istoric_tranzactii, internet_status)
+VALUES(internet_seq.NEXTVAL, 4, 'plata online', 'activ');
+
+INSERT INTO internet_banking_www (id_internet, client_id, istoric_tranzactii, internet_status)
+VALUES(internet_seq.NEXTVAL, 5, 'plata externa', 'activ');
+
+INSERT INTO internet_banking_www (id_internet, client_id, istoric_tranzactii, internet_status)
+VALUES(internet_seq.NEXTVAL, 6, 'plata online', 'activ');
+
+INSERT INTO internet_banking_www (id_internet, client_id, istoric_tranzactii, internet_status)
+VALUES(internet_seq.NEXTVAL, 7, 'plata online', 'activ');
+
+
+-------------------------------exercitii
+--6
+CREATE OR REPLACE TYPE telefon_client AS VARRAY(5) OF VARCHAR2(30);
+CREATE OR REPLACE TYPE locatie_client AS TABLE OF VARCHAR2(20);
+
+CREATE TABLE clienti_yyy AS
+SELECT client_id, nume
+FROM clienti_www
+WHERE ROWNUM <= 2;
+
+ALTER TABLE clienti_yyy
+  ADD (telefon VARCHAR2(30), locatie VARCHAR2(20), limita NUMBER);
+
+CREATE OR REPLACE FUNCTION f3(v_client clienti_yyy.client_id%TYPE, v_nume clienti_yyy.nume%TYPE)
+RETURN VARCHAR2 IS
+  TYPE indexat_limita IS TABLE OF NUMBER(10) INDEX BY BINARY_INTEGER;
+  v_limita indexat_limita;
+  TYPE limita_client IS TABLE OF VARCHAR2(20);
+  v_telefon telefon_client := telefon_client();
+  v_locatie locatie_client := locatie_client();
+BEGIN
+
+  SELECT numar_telefon BULK COLLECT INTO v_telefon
+  FROM clienti_www cl
+  WHERE cl.client_id = v_client;
+
+  SELECT limita_zilnica BULK COLLECT INTO v_limita
+  FROM conturi_www c
+  WHERE c.client_id = v_client;
+
+  SELECT oras BULK COLLECT INTO v_locatie
+  FROM locatii_www l
+  WHERE v_client = l.client_id;
+
+  FOR i IN 1 .. GREATEST(v_telefon.COUNT, v_locatie.COUNT)
+  LOOP
+    UPDATE clienti_yyy c
+    SET telefon = v_telefon(i),
+        locatie = NVL(v_locatie(i), c.locatie),
+        limita = NVL(v_limita(i), c.limita)
+    WHERE c.client_id = v_client;
+
+    IF SQL%ROWCOUNT = 1 THEN
+      COMMIT;
+      RETURN 'date updatate cu succes';
+    ELSE
+      RETURN 'nicio linie updatata.';
+    END IF;
+  END LOOP;
+
+EXCEPTION
+  WHEN NO_DATA_FOUND THEN
+    RETURN 'fara date';
+  WHEN OTHERS THEN
+    RETURN 'eroare ' || SQLERRM;
+END f3;
+/
+
+DECLARE
+  v_result VARCHAR2(100);
+BEGIN
+  v_result := f3(2, 'Ionescu');
+  DBMS_OUTPUT.PUT_LINE(v_result);
+
+  FOR rec IN (SELECT * FROM clienti_yyy WHERE client_id = 2) LOOP
+    DBMS_OUTPUT.PUT_LINE('ID: ' || rec.client_id || ', telefon: ' || rec.telefon || ', Locatie: ' || rec.locatie || ', Limita: ' || rec.limita);
+  END LOOP;
+END;
+/
+
+
+--7
+
+CREATE OR REPLACE PROCEDURE suma_credit_nume
+IS
+  v_tip_credit credit_www.tip_credit%TYPE;
+  v_suma credit_www.credit_suma%TYPE;
+
+  CURSOR seminar_cursor IS
+    SELECT p.client_id
+    FROM participa_www p
+    WHERE p.id_seminar = 50;
+
+  CURSOR credit_cursor(p_client_id participa_www.client_id%TYPE) IS
+    SELECT c.tip_credit, c.credit_suma
+    FROM credit_www c
+    WHERE c.client_id = credit_cursor.p_client_id
+      AND c.status = 'Aprobat';
+
+BEGIN
+  FOR seminar_rec IN seminar_cursor
+  LOOP
+    DBMS_OUTPUT.PUT_LINE('Clientul ' || seminar_rec.client_id || ' a participat la seminarul cu ID-ul 50');
+
+    BEGIN
+      OPEN credit_cursor(seminar_rec.client_id);
+
+      LOOP
+        FETCH credit_cursor INTO v_tip_credit, v_suma;
+        EXIT WHEN credit_cursor%NOTFOUND;
+
+        DBMS_OUTPUT.PUT_LINE(' - Tipul creditului: ' || v_tip_credit || ', Suma imprumutata: ' || v_suma);
+      END LOOP;
+
+      CLOSE credit_cursor; 
+    EXCEPTION
+      WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('eroare pentru clientul: ' || seminar_rec.client_id || ': ' || SQLERRM);
+        CLOSE credit_cursor; 
+    END;
+  END LOOP;
+END suma_credit_nume;
+/
+
+
+BEGIN
+  suma_credit_nume;
+
+  COMMIT;
+END;
+/
+
+
+--8
+
+CREATE OR REPLACE FUNCTION f4(v_id clienti_www.client_id%TYPE) 
+RETURN VARCHAR IS
+	nume clienti_www.nume%TYPE;
+	serviciu private_banking_www.tip_serviciu_privat%TYPE;
+	cont conturi_www.tip_cont%TYPE;
+	limita conturi_www.limita_zilnica%TYPE;
+	serviciu_exceptie EXCEPTION;
+	limita_exceptie EXCEPTION;
+	serv_limita_exceptie EXCEPTION;
+    result VARCHAR2(4000);
+
+	
+BEGIN
+	SELECT c.nume, p.tip_serviciu_privat, co.tip_cont, co.limita_zilnica
+    	INTO nume, serviciu, cont, limita	
+    	FROM clienti_www c, private_banking_www p, conturi_www co
+	WHERE c.client_id = v_id 
+	AND c.client_id = co.client_id
+	AND c.client_id = p.client_id;
+ 
+	IF limita > 4000 THEN
+    	IF serviciu IS NULL THEN
+        	RAISE serv_limita_exceptie;
+    	ELSE
+        RAISE limita_exceptie;
+    	END IF;
+	END IF;
+
+ 	IF serviciu IS NULL THEN
+   		 RAISE serviciu_exceptie;
+	END IF;
+
+	
+	result := 'Clientul ' || nume|| ' cu id ul ' || v_id || ' are un cont de ' || cont || ' cu limita zilnica de ' || limita || ' si beneficiaza de ' || serviciu;
+
+    RETURN result;
+
+    
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN 
+        RETURN 'Nu exista clienti cu id ul ' || v_id;
+    WHEN limita_exceptie THEN
+        RETURN 'Limita clientului cu id ul ' || v_id || ' depaseste 4000 lei';
+    WHEN serviciu_exceptie THEN
+        RETURN 'Clientul cu id ul ' || v_id|| ' nu beneficiaza de un serviciu privat';
+    WHEN serv_limita_exceptie THEN
+        RETURN 'Clientul cu id ul ' || v_id|| ' nu beneficiaza de un serviciu privat si are limita mai mare de 4000 lei';
+END f4;
+/
+
+
+--apelare
+DECLARE
+    result VARCHAR2(4000);
+BEGIN
+    result := f4(1);
+    DBMS_OUTPUT.PUT_LINE(result);
+END;
+/
+DECLARE
+    result VARCHAR2(4000);
+BEGIN
+    result := f4(3);
+    DBMS_OUTPUT.PUT_LINE(result);
+END;
+/
+DECLARE
+    result VARCHAR2(4000);
+BEGIN
+    result := f4(4);
+    DBMS_OUTPUT.PUT_LINE(result);
+END;
+/
+DECLARE
+    result VARCHAR2(4000);
+BEGIN
+    result := f4(6);
+    DBMS_OUTPUT.PUT_LINE(result);
+END;
+/
+DECLARE
+    result VARCHAR2(4000);
+BEGIN
+    result := f4(10);
+    DBMS_OUTPUT.PUT_LINE(result);
+END;
+/
+
+
+
+--9
+
+
+CREATE OR REPLACE PROCEDURE p1 (v_id clienti_www.client_id%type)
+IS
+    v_nume clienti_www.nume%type;
+    exceptie_credit_privat EXCEPTION;
+    v_status_credit credit_www.status%type;
+    v_privat private_banking_www.tip_serviciu_privat%type;
+    exceptie_credit EXCEPTION;
+    exceptie_privat EXCEPTION;
+
+BEGIN
+    SELECT c.nume, cr.status, p.tip_serviciu_privat 
+    INTO v_nume, v_status_credit, v_privat
+    FROM clienti_www c, clienti_cu_servicii_financiare_www csf, servicii_financiare_www s, private_banking_www p, credit_www cr
+    WHERE c.client_id = csf.client_id
+        AND csf.id_financiar = s.id_financiar
+        AND c.client_id = cr.client_id
+        AND c.client_id = p.client_id
+        AND c.client_id = v_id
+		AND ROWNUM = 1;
+
+
+    IF v_status_credit IS NULL OR v_status_credit = 'In asteptare' THEN
+        IF v_privat IS NULL THEN
+            RAISE exceptie_credit_privat;
+        ELSE
+            RAISE exceptie_credit;
+        END IF;
+    END IF;
+
+    IF v_privat IS NULL THEN
+        RAISE exceptie_privat;
+    END IF;
+
+DBMS_OUTPUT.PUT_LINE('Clientul cu id ul ' ||v_id|| ' se numeste: ' || v_nume);
+
+EXCEPTION
+    WHEN TOO_MANY_ROWS THEN       
+        DBMS_OUTPUT.PUT_LINE('clientul cu id ul ' || v_id || ' beneficiaza de mai multe servicii financiare');    
+    WHEN NO_DATA_FOUND THEN       
+        DBMS_OUTPUT.PUT_LINE('Nu exista clientul cu id ul ' || v_id );            
+    WHEN exceptie_credit_privat THEN       
+        DBMS_OUTPUT.PUT_LINE('Clientul cu id ul ' || v_id || ' nu are un credit aprobat si nu beneficiaza de un serviciu privat');    
+    WHEN exceptie_credit THEN        
+        DBMS_OUTPUT.PUT_LINE('Clientul cu id ul ' || v_id || ' nu are un credit aprobat'); 
+    WHEN exceptie_privat THEN        
+        DBMS_OUTPUT.PUT_LINE('Clientul cu id ul ' || v_id || ' nu beneficiaza de un serviciu privat'); 
+    END p1;
+/
+
+
+BEGIN
+	p1(1);
+END;
+/
+BEGIN
+	p1(4);
+END;
+/
+BEGIN
+	p1(5);
+END;
+/
+
+BEGIN
+	p1(2);
+END;
+/
+BEGIN
+	p1(10);
+END;
+/
+
+--10
+
+create table cl as
+select nume
+from clienti_www
+where nume like '%Ionescu%';
+
+CREATE OR REPLACE TRIGGER trg1
+BEFORE DELETE ON cl
+BEGIN
+    IF TO_CHAR(SYSDATE, 'DY') IN ('SAT', 'SUN') THEN
+        RAISE_APPLICATION_ERROR(-20001, 'tabelul nu poate fi sters');
+    END IF;
+END;
+/
+
+
+select * from cl; 
+
+delete from cl;
+
+
+--11
+
+create or replace trigger trg2
+	before update of limita_zilnica on conturi_www
+	for each row
+begin
+	if(:new.limita_zilnica > :old.limita_zilnica) then
+	raise_application_error( - 20001, 'limita zilnica nu poate fi marita');
+	end if;
+end;
+/
+
+update conturi_www
+set limita_zilnica = limita_zilnica + 1000;
+
+
+--12
+
+CREATE TABLE evidenta
+( eroare varchar2(2000), 
+data Date); 
+
+CREATE OR REPLACE TRIGGER trg3
+AFTER SERVERERROR ON SCHEMA 
+BEGIN 
+INSERT INTO evidenta
+VALUES (DBMS_UTILITY.FORMAT_ERROR_STACK, SYSDATE); 
+
+END; 
+/ 
+
+select 10/0 from dual; 
+
+drop table evidenta;
+drop trigger trg3;
+SELECT * FROM evidenta; 
+
+
